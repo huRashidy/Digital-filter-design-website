@@ -1,9 +1,11 @@
 //window.onload = function() {draw()}
-var unitCircleRadius = 200,
+var unitCircleRadius = 100,
   zeroSize = 4,
   poleSize = 5,
   zeros = [],
   poles = [],
+  Allpasszeros = [],
+  Allpasspoles = [],
   canvas = document.getElementById('unitCircle')
   centerX = canvas.width / 2,
   centerY = canvas.height / 2,
@@ -87,11 +89,11 @@ function draw() {
   ctx.beginPath();
 
   ctx.arc(centerX, centerY, unitCircleRadius, startAngle, endAngle);
-  ctx.moveTo(centerX, centerY - unitCircleRadius);
-  ctx.lineTo(centerX, centerY + unitCircleRadius);
+  ctx.moveTo(centerX,0);
+  ctx.lineTo(centerX, 400);
 
-  ctx.moveTo(centerX - unitCircleRadius, centerY);
-  ctx.lineTo(centerX + unitCircleRadius, centerY);
+  ctx.moveTo(0, 200);
+  ctx.lineTo(400, 200);
 
   ctx.fillStyle = "black";
   ctx.fill();
@@ -114,7 +116,7 @@ function draw() {
 
     ctx.strokeStyle = "#ffffff";
     ctx.stroke();
-
+    console.log(poles[i]);
     ctx.closePath();
   }
 
@@ -128,6 +130,23 @@ function draw() {
 
     ctx.fill();
     ctx.closePath();
+  }
+  for (let i =0 ; i<Allpasszeros.length ; i+=1){
+    var ctx = canvas.getContext("2d");
+
+      ctx.beginPath();
+      ctx.fillStyle = "#00FF00" ; 
+      ctx.arc(Allpasszeros[i].x, Allpasszeros[i].y, zeroSize, 0, Math.PI * 2, true);
+      ctx.fill();
+      ctx.closePath();
+      ctx.beginPath();
+      ctx.moveTo(Allpasspoles[i].x - poleSize, Allpasspoles[i].y - poleSize);
+      ctx.lineTo(Allpasspoles[i].x + poleSize, Allpasspoles[i].y + poleSize);
+      ctx.moveTo(Allpasspoles[i].x + poleSize, Allpasspoles[i].y - poleSize);
+      ctx.lineTo(Allpasspoles[i].x - poleSize, Allpasspoles[i].y + poleSize);
+      ctx.strokeStyle = "#00FF00";
+      ctx.stroke();
+      ctx.closePath();
   }
 }
 
@@ -482,7 +501,9 @@ function freqResponse(lambda) {
         x.magnitudeY[i] = x.magnitudeY[i].toFixed(2);
         x.angles[i] = x.angles[i].toFixed(2);
       }
-    
+      Allpasspoles = x.allpassfilterpoles,
+      Allpasszeros = x.allpassfilterzeros,
+      draw();
     
       const chart = document.getElementById("chart")
       lineChart = new Chart(chart, {
@@ -576,4 +597,3 @@ function freqResponse(lambda) {
 })
 ();
 }
-
