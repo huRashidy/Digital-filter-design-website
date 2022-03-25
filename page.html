@@ -3,6 +3,10 @@
 <head>
   <link rel="stylesheet" href="../static/style.css" />
   <title>Digital Filter Design</title>
+
+  <script src="{{url_for('static', filename='jquery-3.6.0.min.js')}}"></script>
+  <script src="{{url_for('static', filename='plotly-2.8.3.min.js')}}"></script>
+
 </head>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -12,36 +16,34 @@
 <script src="https://code.highcharts.com/highcharts-more.js"></script>
 <script src="https://code.highcharts.com/modules/draggable-points.js"></script>
 
-
 <body onload="draw();">
-  <h1 id="title">The Unit Circle Visualized</h1>
+  <h1 id="title">Digital Filter Design</h1>
   <label>
     <input type="radio" id="zero" name="add" checked="true" />Add Zeros
     <input type="radio" id="pole" name="add" />Add Poles
   </label>
-  <input type="checkbox" id="conj">
-  Draw Conjugate
-  <label>
-    <button onclick="clearCanvas('zeros')">Clear Zeros</button>
-    <button onclick="clearCanvas('poles');">Clear Poles</button>
-    <button onclick="clearCanvas('all');">Clear All</button>
-  </label>
-  <div class="row">
-    <div class="column">
-      <canvas id="unitCircle" width="460" height="410"></canvas>
-    </div>
-     
+  <input type="checkbox" id="conj" /> Draw Conjugate
+  <div class="clear-row">
+    <label>
+      <button onclick="clearCanvas('zeros')">Clear Zeros</button>
+      <button onclick="clearCanvas('poles');">Clear Poles</button>
+      <button onclick="clearCanvas('signal');">Clear signal</button>
+      <!-- <input type="file" id="signalFile" accept=".csv" class="btn btn-success" style="visibility:hidden;" /> -->
+    </label>
   </div>
-  <div class="file-upload">
-    <input class = "file-upload__input" type ="file" name="myfile[]" , id="myFile" >
-    <button class="file-upload__button" type="button"> Choose File</button>
+
+  <!-- unit circle + magnitude + phase -->
+  <div class="first-row">
+    <canvas id="unitCircle" width="400" height="400" style="cursor: grabbing;"></canvas>
+    <canvas id="chart" height="700" width="700"></canvas>
+    <canvas id="chart2" height="600" width="600"></canvas>
+   
   </div>
-  <div>
-    <button id="signalsplot" onclick= "getSignals()" class="btn btn-secondary p-2">display</button>
-  </div>
-    <div class="column">
-      <canvas id="chart" height="400" width="500"></canvas>
-      <label>Custom Filter</label>
+  
+  <!-- all pass filter -->
+  <div class="second-row">
+    <div class="all-pass-row">
+      <label>Customize all pass Filter</label>
       <input type="text" id="text">
       <input onclick="addFilter()" type="submit" value="Add">
       <form style="padding:50px">
@@ -52,60 +54,25 @@
             </select>
             <div class="overSelect"></div>
           </div>
-
-          <div id="checkBoxes">
-      
-      <style>
-      
-              file-upload{
-                display: inline-flex;
-                align-items: center;
-                font-size: 15px;
-              }
-              .file-upload__input{
-                background: #009879;
-                border: 2px solid #009879;
-                border-radius: 4px;
-                display: none;
-              }
-              .file-upload__button{
-                -webkit-appearance: none;
-                background: #009879;
-                border: 2px solid #009879;
-                border-radius: 4px;
-                outline: none;
-                padding: 0.5em 0.8em;
-                margin-right: 15px;
-                color: #ffffff; 
-                font-size: 1em;
-                font-family: sans-serif;
-                font-weight: bold;
-                cursor: pointer;
-              
-              }
-              
-                  </style>
-    -->
-          </div>
+          <div id="checkBoxes"></div>
         </div>
       </form>
     </div>
-    <div class="row"> 
-    <div class="column">
-      <canvas id="chart2"></canvas>
-      <canvas id="chart3"></canvas>
-      <canvas id="chart4"></canvas>
-      <canvas id="chart5"></canvas>
-
-    </div>
-      
-       
-      </div>
+    <canvas id="chart3" height="400" width="400"></canvas>
   </div>
-  <script src="{{url_for('static', filename='graph.js')}}"></script>  
- <!---
-  <script src="F:/SBME 3/dsp/task5work/ta7as/Digital_Filter_Design-master/templates/static/js/graph.js"></script>
- -->
-</body>
 
+  <!-- display signal -->
+  <div class="third-row">
+    <div class="display-row">
+      <button id="signalsplot" onclick= "realtimesignal()" class="btn btn-secondary p-2">display</button>
+      <label for="sliderChunks">Points per second</label>
+      <input id="sliderChunks" type = "range" min = "1" max = "100" step = "1" value = "1" onChange = "sliderValue()"/>    
+    </div>
+    <div>
+      <div id="realTimeSignal">
+    </div>
+  </div>
+
+  <script src="{{url_for('static', filename='graph.js')}}"></script> 
+</body>
 </html>

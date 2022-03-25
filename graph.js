@@ -25,10 +25,13 @@ var unitCircleRadius = 100,
   slidervalue =1,
   xData=[],
   yData=[],
-  filtered=[];
+  filtered=[],
+  clear=true;
+
+clearCanvas("all");
 for (let i = -0.9; i <= 0.9; i += 0.1) {
   if (i.toFixed(1) != -0.0) {
-    document.getElementById("checkBoxes").innerHTML += "<input onclick  = \"freqResponse(" + i.toFixed(1) + ")\"  type=\"checkbox\" id=" + i.toFixed(1) + ">" + i.toFixed(1) + "<br>"
+    document.getElementById("checkBoxes").innerHTML += "<input onclick  = \"freqResponse(" + i.toFixed(1) + ");\"  type=\"checkbox\" id=" + i.toFixed(1) + ">" + i.toFixed(1) + "<br>"
   } else {
     document.getElementById("checkBoxes").innerHTML += "<input onclick  = \"freqResponse(" + 0 + ")\" type=\"checkbox\" id=" + 0 + ">" + 0 + " <br> "
   }
@@ -82,9 +85,11 @@ function getXY(event) {
 }
 
 function draw() {
+  
   var ctx = canvas.getContext('2d');
   var startAngle = 0;
   var endAngle = 2 * (Math.PI);
+  ctx.clearRect(0 , 0 , canvas.width , canvas.height)
 
   ctx.beginPath();
 
@@ -116,7 +121,6 @@ function draw() {
 
     ctx.strokeStyle = "#ffffff";
     ctx.stroke();
-    console.log(poles[i]);
     ctx.closePath();
   }
 
@@ -148,6 +152,7 @@ function draw() {
       ctx.stroke();
       ctx.closePath();
   }
+  
 }
 
 
@@ -239,21 +244,29 @@ function drawCoordinates(x, y, flagZero) {
 function clearCanvas(toClear) {
   if (toClear === 'zeros') {
     zeros = []
+    // Allpasszeros = []
   } else if (toClear === 'poles') {
     poles = []
+    // Allpasspoles = []
   } 
   else if(toClear =='signal'){
-    signalIterator = (length/sliderValue)+100 ,
-    getSignals(),
     xData = []
     yData = []
-    filtered = []
-    drawsignals()
+    filtered = []   
+    clear=false
   }
   else {
     zeros = []
     poles = []
+    xData = []
+    yData = []
+    filtered = []
+    allpassfilterphase=[]
+    allpassfilterpoles=[]
+    allpassfilterzeros=[]
+    clear=false
   }
+  drawsignals();
   draw();
   freqResponse(5);
 }
@@ -374,14 +387,44 @@ function addFilter() {
   let filter = document.getElementById("text").value
   if (filter == "") return
   document.getElementById("checkBoxes").insertAdjacentHTML('beforeend', "<input onclick  = \"freqResponse('" + filter + "')\"  type=\"checkbox\" id=\"" + filter + "\">" + filter + "<br>")
+  
 }
 
 
 function drawsignals(){
-  const chart4 = document.getElementById("chart4")
+  let trace1 = {
+    x: xData,
+    y: yData,
+    type: 'scatter',
+    name: "signal"
+  };
+
+  let trace2 = {
+    x: xData,
+    y: filtered,
+    xaxis: 'x2',
+    yaxis: 'y2',
+    type: 'scatter',
+    name: "filtered"
+  };
+
+  let data = [trace1, trace2];
+  let layout = {
+    grid: {
+      rows: 2,
+      columns: 1,
+      pattern: 'independent'
+    },
+  };
+
+
+  Plotly.newPlot("realTimeSignal", data,layout);
+
+ /* const chart4 = document.getElementById("chart4")
   if (lineChart4 != 0)
         lineChart4.destroy();
-  lineChart4 = new Chart(chart4, {
+   lineChart4 = new Chart(chart4, 
+    {
     type: 'line',
     data: {
       labels: xData,
@@ -391,22 +434,11 @@ function drawsignals(){
         backgroundColor: "rgba(0,0,255,0.4)",
         borderColor: "rgba(0,0,255,0.7)",
         tension :0.1,
-        data: yData
-        /* borderCapStyle: 'butt',
-        borderDash: [],
-        borderDashOffset: 0.0,
-        borderJoinStyle: 'miter',
-        pointBorderColor: "rgba(0,0,255,1)",
-        pointBackgroundColor: "#fff",
-        pointBorderWidth: 0.5,
-        pointHoverRadius: 1,
-        pointHitRadius: 1,
         data: yData,
-        */
-
       },]
-    }
+    },
   })
+
   const chart5 = document.getElementById("chart5")
   if (lineChart5 != 0)
         lineChart5.destroy();
@@ -421,25 +453,24 @@ function drawsignals(){
         borderColor: "rgba(0,0,255,0.7)",
         tension :0.1,
         data: filtered,
-        /* borderCapStyle: 'butt',
-        borderDash: [],
-        borderDashOffset: 0.0,
-        borderJoinStyle: 'bevel',
-        pointBorderColor: "rgba(0,0,255,1)",
-        pointBackgroundColor: "#fff",
-        pointBorderWidth: 1,
-        pointHoverRadius: 5,
-        pointHitRadius: 10,
-        */
-
+        
       },]
     }
   })
+  */
+}
+
+function realtimesignal(){
+  signalIterator=0;
+  clear=true;
+  getSignals();
+  console.log("aboda");
 }
 
 function getSignals(){
 arr = [signalIterator,slidervalue];
 data = JSON.stringify(arr);
+console.log(arr);
 $.ajax({
 url: '/reqsig',
 type : 'post',
@@ -447,14 +478,29 @@ contentType: 'application/json',
 dataType : 'json',
 data :data,
 success:function(response){
+
+  if(xData.length>slidervalue+2 ){
+  xData.splice(0,slidervalue+1)
+  yData.splice(0,slidervalue+1)
+  filtered.splice(0,slidervalue+1)
+  
+}
 xData =xData.concat(response.xAxisData);
 yData = yData.concat(response.yAxisData);
 filtered = filtered.concat(response.filter);
+console.log(xData)
+console.log(yData)
 length = response.datalength;
 signalIterator = signalIterator + 1;
- drawsignals();
-if(signalIterator*slidervalue < length){
-  setTimeout(getSignals, 1000);
+drawsignals();
+if(signalIterator*slidervalue < length && clear){
+  setTimeout(getSignals, 1000); 
+}
+else{
+xData =[];
+yData = [];
+filtered = [];
+drawsignals();
 }
 }
 });
@@ -504,7 +550,7 @@ function freqResponse(lambda) {
       Allpasspoles = x.allpassfilterpoles,
       Allpasszeros = x.allpassfilterzeros,
       draw();
-    
+
       const chart = document.getElementById("chart")
       lineChart = new Chart(chart, {
         type: 'line',
@@ -521,12 +567,14 @@ function freqResponse(lambda) {
             borderJoinStyle: 'miter',
             pointBorderColor: "rgba(75,192,192,1)",
             pointBackgroundColor: "#fff",
-            pointBorderWidth: 1,
-            pointHoverRadius: 5,
+            pointBorderWidth: 5,
+            pointHoverRadius: 7,
             pointHitRadius: 10,
             data: x.magnitudeY,
           },]
-        }
+        },
+    
+          
       })
       if (lineChart2 != 0)
         lineChart2.destroy();
@@ -534,6 +582,9 @@ function freqResponse(lambda) {
       const chart2 = document.getElementById("chart2")
       lineChart2 = new Chart(chart2, {
         type: 'line',
+        axisX:{
+          labelFontSize: 26
+        },
         data: {
           labels: x.magnitudeX,
           datasets: [{
@@ -547,12 +598,26 @@ function freqResponse(lambda) {
             borderJoinStyle: 'miter',
             pointBorderColor: "rgba(255,140,0,1)",
             pointBackgroundColor: "#fff",
-            pointBorderWidth: 1,
-            pointHoverRadius: 5,
+            pointBorderWidth: 5,
+            pointHoverRadius: 7,
             pointHitRadius: 10,
-            data: x.angles3,
+            data: x.phaseresp,
           },]
-        }
+        },
+        options: {
+          scales: {
+              xAxes: [{
+                  ticks: {
+                      beginAtZero:true
+                  }
+              }],
+              xAxes: [{
+                  ticks: {
+                      fontSize: 20
+                  }
+              }]
+          }
+      }  
       })
 
       if (lineChart3 != 0)
@@ -577,7 +642,7 @@ function freqResponse(lambda) {
             pointBorderWidth: 1,
             pointHoverRadius: 5,
             pointHitRadius: 10,
-            data: x.angles2,
+            data: x.allpassfilterphase,
           },]
         }
       })
